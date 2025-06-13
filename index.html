@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Fábrica de Pasteles Sanrio para Diana</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <style>
+    html, body { margin:0; padding:0; height:100%; background: #a67c52; }
+    body { font-family: 'Comic Sans MS', cursive, sans-serif; height:100vh; }
+    #juego { display: flex; flex-direction: column; align-items: center; min-height:100vh; background: #a67c52; position:relative; }
+    #cocina { width:100vw; max-width:420px; height:180px; display:block; background: #c9a77d; border-bottom: 8px solid #8b5c2a; }
+    #charla { font-size: 1.1em; margin: 0.2em; min-height:2em; color:#fffbe7; background:rgba(80,40,10,0.5); border-radius:12px; padding:0.5em 1em; }
+    #notaPedido {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      width: 44vw;
+      min-width: 140px;
+      max-width: 200px;
+      min-height: 60px;
+      background: #fffbe7;
+      border: 2px solid #c9a77d;
+      border-radius: 12px;
+      margin:0.5em 0 0.2em 0;
+      box-shadow: 2px 4px 12px #8b5c2a55;
+      font-size:1.1em;
+      color:#222;
+      padding:0.7em 1em;
+      font-family: 'Courier New', monospace;
+      z-index: 10;
+      text-align:left;
+      word-break:break-word;
+    }
+    #personaje { width:110px; height:90px; display:block; margin:0.2em auto; }
+    #pastel { margin: 0.5em; width:140px; height:140px; display:block; background: #f5e6d3; border-radius: 16px; box-shadow: 0 2px 8px #8b5c2a33; }
+    #horno { width:110px; height:80px; display:block; margin:0.2em auto; }
+    .opciones { display: flex; gap: 0.5em; margin-bottom: 0.5em; flex-wrap:wrap; justify-content:center; }
+    button { font-size: 1em; padding: 0.4em 0.8em; border-radius: 10px; border: none; background: #fffbe7; box-shadow: 2px 2px 8px #c9a77d; cursor: pointer; color:#6b4a1b; }
+    button:active { background: #ffe4e1; }
+    #calificacion { font-size: 1.2em; margin: 0.2em; min-height:2em; color:#fffbe7; }
+    #mensaje { font-size: 1em; margin: 0.2em; min-height:2em; color:#fffbe7; }
+    #puntaje { font-size: 1em; margin: 0.2em; color:#fffbe7; }
+    @media (max-width: 600px) {
+      #cocina { max-width:100vw; }
+      #pastel { width:110px; height:110px; }
+      #personaje { width:80px; height:65px; }
+      #notaPedido { font-size:1em; min-width: 90px; max-width: 140px; }
+      #horno { width:80px; height:60px; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Música y sonidos personalizados -->
+  <audio id="musica" src="https://zeta.123tokyo.xyz/get.php/6/1f/sV0Aqmt1Uck.mp3?n=ROYALTY%20FREE%20Restaurant%20Music%20_%20Jazz%20Music%20Royalty%20Free%20_%20BGM%20Royalty%20Free%20Music&uT=R&uN=ZHVieWE%3D&h=ZI0wR4HrRgEHlFvEoRYL1A&s=1749784295&uT=R&uN=ZHVieWE%3D" loop preload="auto"></audio>
+  <audio id="sonido-escribir" src="https://api.ytconverterpro.com/tunnel?id=VfaPvSoyoTnOwGWF0w-tD&exp=1749777522372&sig=CzFPRtfmlUr8n36jXZLbmzDNGX69iyerB9FqG_43iOA&sec=3m4AkKA8dX5CKPHtiJN7lPL6APM3VRjYCttPNd5k9OY&iv=8bnw9pqrvY4kJ2OMUEaLfQ" preload="auto"></audio>
+  <audio id="sonido-entregar" src="https://api.ytconverterpro.com/tunnel?id=98K_ZKFuLCZ8ZuY-mYFYp&exp=1749777459169&sig=s2dNJlQgm_ZvJhAVnOU6ioWqwZHEy_v5cE4q-FaQyGQ&sec=cZGb3xAH2po-AU-6_qGfRHhT_oIIA11yDw8IZwUS0jk&iv=X1DE3r8FEVTPVGR4aw1AvA" preload="auto"></audio>
+  <audio id="sonido-undertale" src="https://theta.123tokyo.xyz/get.php/7/a4/-XAY6fHBTpI.mp3?n=Generic%202%20Dialogue%20Sound%20Effect%20%28Undertale%20Character%20Voice%20Beeps%29&uT=R&uN=ZHVieWE%3D&h=INnQpj5eJSw1nLaVyXdnrA&s=1749784448&uT=R&uN=ZHVieWE%3D" preload="auto"></audio>
+  <div id="juego">
+    <canvas id="cocina" width="360" height="180"></canvas>
+    <div id="charla"></div>
+    <canvas id="personaje" width="110" height="90"></canvas>
+    <div id="notaPedido"></div>
+    <canvas id="pastel" width="140" height="140"></canvas>
+    <canvas id="horno" width="110" height="80"></canvas>
+    <div class="opciones" id="bases"></div>
+    <div class="opciones" id="cremas"></div>
+    <div class="opciones" id="decoraciones"></div>
+    <div class="opciones" id="extras"></div>
+    <button id="entregar">Hornear y entregar pastel 🎂</button>
+    <div id="calificacion"></div>
+    <div id="mensaje"></div>
+    <div id="puntaje"></div>
+  </div>
+  <script>
+    // --- Temáticas y personajes por nivel ---
+    const tematicas = [
+      {
+        nombre: "Clásico Sanrio",
+        colorFondo: "#a67c52",
+        colorCocina: "#c9a77d",
+        personajes: [
+          {nombre:"Hello Kitty", cara:drawHelloKitty, charla:"¡Hola! ¿Me haces un pastel, por favor?"},
+          {nombre:"Pochacco", cara:drawPochacco, charla:"¡Guau! ¡Quiero un pastel delicioso!"},
+          {nombre:"My Melody", cara:drawMyMelody, charla:"¿Podrías prepararme un pastel bonito?"},
+          {nombre:"Keroppi", cara:drawKeroppi, charla:"¡Kero kero! ¡Un pastel para mí, por favor!"},
+          {nombre:"Cinnamoroll", cara:drawCinnamoroll, charla:"¿Me haces un pastel esponjoso?"},
+          {nombre:"Tuxedo Sam", cara:drawTuxedoSam, charla:"¡Hola! ¿Tienes pastel de fresa?"},
+          {nombre:"Badtz-Maru", cara:drawBadtzMaru, charla:"¡Hazlo genial, por favor!"},
+          {nombre:"Pekkle", cara:drawPekkle, charla:"¡Quiero un pastel para bailar!"},
+          {nombre:"Pompompurin", cara:drawPompompurin, charla:"¡Me encanta el pastel con crema!"}
+        ]
+      },
+      {
+        nombre: "Sanrio Acuático",
+        colorFondo: "#6ec6f5",
+        colorCocina: "#bde0fe",
+        personajes: [
+          {nombre:"Tuxedo Sam", cara:drawTuxedoSam, charla:"¡Hola! ¿Tienes pastel de fresa?"},
+          {nombre:"Badtz-Maru", cara:drawBadtzMaru, charla:"¡Hazlo genial, por favor!"},
+          {nombre:"Pekkle", cara:drawPekkle, charla:"¡Quiero un pastel para bailar!"},
+          {nombre:"Keroppi", cara:drawKeroppi, charla:"¡Kero kero! ¡Un pastel para mí, por favor!"},
+          {nombre:"Pato Ahiru no Pekkle", cara:drawPekkle, charla:"¡Un pastel para mi show!"}
+        ]
+      },
+      {
+        nombre: "Sanrio Dulce",
+        colorFondo: "#f9b",
+        colorCocina: "#ffe4f7",
+        personajes: [
+          {nombre:"Pompompurin", cara:drawPompompurin, charla:"¡Me encanta el pastel con crema!"},
+          {nombre:"Cinnamoroll", cara:drawCinnamoroll, charla:"¡Quiero pastel con chispas!"},
+          {nombre:"My Melody", cara:drawMyMelody, charla:"¡Hazlo muy bonito, por favor!"},
+          {nombre:"Hello Kitty", cara:drawHelloKitty, charla:"¡Quiero pastel rosa!"},
+          {nombre:"Tuxedo Sam", cara:drawTuxedoSam, charla:"¡Un pastel para compartir!"}
+        ]
+      }
+    ];
+
+    function getTematicaActual() {
+      return tematicas[Math.floor(puntaje/50)%tematicas.length];
+    }
+
+    // --- Sonidos y música ---
+    const musica = document.getElementById('musica');
+    const sonidoEscribir = document.getElementById('sonido-escribir');
+    const sonidoEntregar = document.getElementById('sonido-entregar');
+    const sonidoUndertale = document.getElementById('sonido-undertale');
+    musica.volume = 1.0;
+    sonidoEscribir.volume = 1.0;
+    sonidoEntregar.volume = 1.0;
+    sonidoUndertale.volume = 1.0;
+    let musicaIniciada = false;
+    function iniciarSonidos() {
+      if(!musicaIniciada){
+        musica.play();
+        musicaIniciada=true;
+      }
+    }
+    musica.addEventListener('ended', function() {
+      this.currentTime = 0;
+      this.play();
+    });
+    document.body.addEventListener('pointerdown', iniciarSonidos, {once:true});
+    document.body.addEventListener('keydown', iniciarSonidos, {once:true});
+
+    // --- Opciones de pasteles ---
+    const bases = [
+      {nombre:"Vainilla", draw:drawBaseVainilla},
+      {nombre:"Chocolate", draw:drawBaseChocolate},
+      {nombre:"Fresa", draw:drawBaseFresa},
+      {nombre:"Red Velvet", draw:drawBaseRedVelvet}
+    ];
+    const cremas = [
+      {nombre:"Blanca", draw:drawCremaBlanca},
+      {nombre:"Rosa", draw:drawCremaRosa},
+      {nombre:"Café", draw:drawCremaCafe},
+      {nombre:"Azul", draw:drawCremaAzul}
+    ];
+    const decoraciones = [
+      {nombre:"Frutillas", draw:drawDecoFrutilla},
+      {nombre:"Estrellas", draw:drawDecoEstrella},
+      {nombre:"Corazones", draw:drawDecoCorazon},
+      {nombre:"Chispas", draw:drawDecoChispa}
+    ];
+    const extras = [
+      {nombre:"Velita", draw:drawExtraVelita},
+      {nombre:"Macarrón", draw:drawExtraMacarron},
+      {nombre:"Galleta", draw:drawExtraGalleta},
+      {nombre:"Cereza", draw:drawExtraCereza}
+    ];
+
+    // --- Estado del juego ---
+    let pedido = {};
+    let eleccion = {base:0, crema:0, deco:0, extra:0};
+    let puntaje = 0, totalPedidos = 0;
+    let animX = -110, animIn = false;
+    let horneando = false, hornoAnim = 0;
+
+    // --- Elementos DOM ---
+    const pastelCanvas = document.getElementById('pastel');
+    const basesDiv = document.getElementById('bases');
+    const cremasDiv = document.getElementById('cremas');
+    const decoracionesDiv = document.getElementById('decoraciones');
+    const extrasDiv = document.getElementById('extras');
+    const mensajeDiv = document.getElementById('mensaje');
+    const personajeCanvas = document.getElementById('personaje');
+    const entregarBtn = document.getElementById('entregar');
+    const calificacionDiv = document.getElementById('calificacion');
+    const charlaDiv = document.getElementById('charla');
+    const puntajeDiv = document.getElementById('puntaje');
+    const cocinaCanvas = document.getElementById('cocina');
+    const notaPedidoDiv = document.getElementById('notaPedido');
+    const hornoCanvas = document.getElementById('horno');
+    const ctx = pastelCanvas.getContext('2d');
+    const ctxCocina = cocinaCanvas.getContext('2d');
+    const ctxPersonaje = personajeCanvas.getContext('2d');
+    const ctxHorno = hornoCanvas.getContext('2d');
+
+    // --- Dibuja fondo de cocina y mostrador ---
+    function drawCocina() {
+      let tematica = getTematicaActual();
+      document.body.style.background = tematica.colorFondo;
+      document.getElementById('juego').style.background = tematica.colorFondo;
+      ctxCocina.clearRect(0,0,360,180);
+      ctxCocina.fillStyle = tematica.colorCocina;
+      ctxCocina.fillRect(0,0,360,180);
+      ctxCocina.fillStyle = "#a67c52";
+      ctxCocina.fillRect(0,140,360,40);
+      ctxCocina.strokeStyle = "#8b5c2a";
+      for(let i=0;i<9;i++) {
+        ctxCocina.beginPath();
+        ctxCocina.moveTo(i*40,140); ctxCocina.lineTo(i*40,180);
+        ctxCocina.stroke();
+      }
+      for(let i=0;i<2;i++) {
+        ctxCocina.beginPath();
+        ctxCocina.moveTo(0,140+i*20); ctxCocina.lineTo(360,140+i*20);
+        ctxCocina.stroke();
+      }
+      ctxCocina.fillStyle = "#2d1400";
+      ctxCocina.fillRect(0,110,360,30);
+      ctxCocina.strokeStyle = "#8b5c2a";
+      ctxCocina.lineWidth = 3;
+      ctxCocina.strokeRect(0,110,360,30);
+      ctxCocina.lineWidth = 1;
+      ctxCocina.fillStyle = "#b5651d";
+      ctxCocina.fillRect(10,60,60,40);
+      ctxCocina.fillStyle = "#fffbe7";
+      ctxCocina.fillRect(20,70,40,20);
+      ctxCocina.strokeStyle = "#8b5c2a";
+      ctxCocina.strokeRect(10,60,60,40);
+      ctxCocina.fillStyle = "#bde0fe";
+      ctxCocina.fillRect(300,30,30,20);
+      ctxCocina.fillStyle = "#fff";
+      ctxCocina.beginPath();
+      ctxCocina.arc(315,50,15,0,Math.PI,true);
+      ctxCocina.fill();
+      ctxCocina.fillStyle = "#b5651d";
+      ctxCocina.fillRect(40,40,10,30);
+      ctxCocina.beginPath();
+      ctxCocina.arc(45,40,6,0,Math.PI*2);
+      ctxCocina.fill();
+      ctxCocina.fillStyle = "#bde0fe";
+      ctxCocina.fillRect(120,15,60,35);
+      ctxCocina.strokeStyle = "#fff";
+      ctxCocina.lineWidth = 2;
+      ctxCocina.strokeRect(120,15,60,35);
+      ctxCocina.lineWidth = 1;
+      ctxCocina.fillStyle = "#b2ff5c";
+      ctxCocina.beginPath();
+      ctxCocina.arc(80,80,8,0,Math.PI*2);
+      ctxCocina.fill();
+      ctxCocina.fillStyle = "#b5651d";
+      ctxCocina.fillRect(76,88,8,8);
+      ctxCocina.fillStyle = "#ffe4b5";
+      ctxCocina.beginPath();
+      ctxCocina.ellipse(260,120,14,8,0,0,Math.PI*2);
+      ctxCocina.fill();
+      ctxCocina.fillStyle = "#ffb6c1";
+      ctxCocina.beginPath();
+      ctxCocina.ellipse(260,110,14,7,0,0,Math.PI*2);
+      ctxCocina.fill();
+      ctxCocina.fillStyle = "#f33";
+      ctxCocina.beginPath();
+      ctxCocina.arc(260,104,4,0,Math.PI*2);
+      ctxCocina.fill();
+    }
+
+    // --- Dibujo de cada ingrediente y pastel ---
+    function drawBaseVainilla(ctx, x, y) {
+      ctx.fillStyle = "#ffe4b5";
+      ctx.beginPath();
+      ctx.ellipse(x, y+30, 40, 16, 0, 0, Math.PI*2);
+      ctx.fill();
+      ctx.fillRect(x-40, y-10, 80, 40);
+    }
+    function drawBaseChocolate(ctx, x, y) {
+      ctx.fillStyle = "#b5651d";
+      ctx.beginPath();
+      ctx.ellipse(x, y+30, 40, 16, 0, 0, Math.PI*2);
+      ctx.fill();
+      ctx.fillRect(x-40, y-10, 80, 40);
+    }
+    function drawBaseFresa(ctx, x, y) {
+      ctx.fillStyle = "#ffb6c1";
+      ctx.beginPath();
+      ctx.ellipse(x, y+30, 40, 16, 0, 0, Math.PI*2);
+      ctx.fill();
+      ctx.fillRect(x-40, y-10, 80, 40);
+    }
+    function drawBaseRedVelvet(ctx, x, y) {
+      ctx.fillStyle = "#e32636";
+      ctx.beginPath();
+      ctx.ellipse(x, y+30, 40, 16, 0, 0, Math.PI*2);
+      ctx.fill();
+      ctx.fillRect(x-40, y-10, 80, 40);
+    }
+    function drawCremaBlanca(ctx, x, y) {
+      ctx.fillStyle = "#fff";
+      ctx.beginPath();
+      ctx.ellipse(x, y, 40, 16, 0, 0, Math.PI*2);
+      ctx.fill();
+    }
+    function drawCremaRosa(ctx, x, y) {
+      ctx.fillStyle = "#ffb6c1";
+      ctx.beginPath();
+      ctx.ellipse(x, y, 40, 16, 0, 0, Math.PI*2);
+      ctx.fill();
+    }
+    function drawCremaCafe(ctx, x, y) {
+      ctx.fillStyle = "#eecbad";
+      ctx.beginPath();
+      ctx.ellipse(x, y, 40, 16, 0, 0, Math.PI*2);
+      ctx.fill();
+    }
+    function drawCremaAzul(ctx, x, y) {
+      ctx.fillStyle = "#bde0fe";
+      ctx.beginPath();
+      ctx.ellipse(x, y, 40, 16, 0, 0, Math.PI*2);
+      ctx.fill();
+    }
+    function drawDecoFrutilla(ctx, x, y) {
+      for(let i=0;i<5;i++) {
+        let ang = i*Math.PI*2/5;
+        ctx.save();
+        ctx.translate(x+Math.cos(ang)*28, y+Math.sin(ang)*10, 0);
+        ctx.fillStyle = "#f33";
+        ctx.beginPath();
+        ctx.arc(0,0,6,0,Math.PI*2);
+        ctx.fill();
+        ctx.restore();
+      }
+    }
+    function drawDecoEstrella(ctx, x, y) {
+      ctx.fillStyle = "#ff0";
+      for(let i=0;i<5;i++) {
+        let ang = i*Math.PI*2/5;
+        ctx.save();
+        ctx.translate(x+Math.cos(ang)*28, y+Math.sin(ang)*10, 0);
+        ctx.rotate(Math.PI/10);
+        ctx.beginPath();
+        for(let j=0;j<5;j++) {
+          ctx.lineTo(Math.cos(j*2*Math.PI/5)*6, Math.sin(j*2*Math.PI/5)*6);
+          ctx.lineTo(Math.cos((j*2+1)*Math.PI/5)*3, Math.sin((j*2+1)*Math.PI/5)*3);
+        }
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+      }
+    }
+    function drawDecoCorazon(ctx, x, y) {
+      ctx.fillStyle = "#f9b";
+      for(let i=0;i<5;i++) {
+        let ang = i*Math.PI*2/5;
+        ctx.save();
+        ctx.translate(x+Math.cos(ang)*28, y+Math.sin(ang)*10, 0);
+        ctx.rotate(-Math.PI/6);
+        ctx.beginPath();
+        ctx.moveTo(0,0);
+        ctx.bezierCurveTo(-3,-6,-10,-6,-10,0);
+        ctx.bezierCurveTo(-10,6,0,9,0,15);
+        ctx.bezierCurveTo(0,9,10,6,10,0);
+        ctx.bezierCurveTo(10,-6,3,-6,0,0);
+        ctx.fill();
+        ctx.restore();
+      }
+    }
+    function drawDecoChispa(ctx, x, y) {
+      ctx.fillStyle = "#8cf";
+      for(let i=0;i<10;i++) {
+        let ang = i*Math.PI*2/10;
+        ctx.save();
+        ctx.translate(x+Math.cos(ang)*24, y+Math.sin(ang)*8, 0);
+        ctx.beginPath();
+        ctx.arc(0,0,2,0,Math.PI*2);
+        ctx.fill();
+        ctx.restore();
+      }
+    }
+    function drawExtraVelita(ctx, x, y) {
+      ctx.fillStyle = "#f9c";
+      ctx.fillRect(x-2, y-18, 4, 18);
+      ctx.fillStyle = "#ff0";
+      ctx.beginPath();
+      ctx.arc(x, y-20, 4, 0, Math.PI*2);
+      ctx.fill();
+    }
+    function drawExtraMacarron(ctx, x, y) {
+      ctx.fillStyle = "#b2ff5c";
+      ctx.beginPath();
+      ctx.ellipse(x, y, 12, 7, 0, 0, Math.PI*2);
+      ctx.fill();
+      ctx.strokeStyle="#fff";
+      ctx.beginPath();
+      ctx.ellipse(x, y, 10, 5, 0, 0, Math.PI*2);
+      ctx.stroke();
+    }
+    function drawExtraGalleta(ctx, x, y) {
+      ctx.fillStyle = "#eecbad";
+      ctx.beginPath();
+      ctx.arc(x, y, 10, 0, Math.PI*2);
+      ctx.fill();
+      ctx.fillStyle="#b5651d";
+      for(let i=0;i<6;i++) {
+        ctx.beginPath();
+        ctx.arc(x+Math.cos(i*Math.PI/3)*6, y+Math.sin(i*Math.PI/3)*6, 1.5, 0, Math.PI*2);
+        ctx.fill();
+      }
+    }
+    function drawExtraCereza(ctx, x, y) {
+      ctx.fillStyle = "#f33";
+      ctx.beginPath();
+      ctx.arc(x-4, y, 4, 0, Math.PI*2);
+      ctx.arc(x+4, y, 4, 0, Math.PI*2);
+      ctx.fill();
+      ctx.strokeStyle="#080";
+      ctx.beginPath();
+      ctx.moveTo(x-2,y-4); ctx.lineTo(x-2,y-10);
+      ctx.moveTo(x+2,y-4); ctx.lineTo(x+2,y-10);
+      ctx.stroke();
+    }
+
+    // --- Dibujo de personajes extra ---
+    function drawTuxedoSam(ctx, x, y) {
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.fillStyle = "#6ec6f5";
+      ctx.beginPath();
+      ctx.ellipse(0, 0, 22, 20, 0, 0, Math.PI*2);
+      ctx.fill();
+      ctx.fillStyle = "#fff";
+      ctx.beginPath();
+      ctx.ellipse(0, 10, 16, 10, 0, 0, Math.PI*2);
+      ctx.fill();
+      ctx.fillStyle = "#f9b";
+      ctx.beginPath();
+      ctx.arc(0, -10, 7, 0, Math.PI, true);
+      ctx.fill();
+      ctx.fillStyle = "#222";
+      ctx.beginPath();
+      ctx.arc(-7, -2, 2, 0, Math.PI*2);
+      ctx.arc(7, -2, 2, 0, Math.PI*2);
+      ctx.fill();
+      ctx.fillStyle = "#ff0";
+      ctx.beginPath();
+      ctx.arc(0, 5, 2, 0, Math.PI*2);
+      ctx.fill();
+      ctx.restore();
+    }
+    function drawBadtzMaru(ctx, x, y) {
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.fillStyle = "#222";
+      ctx.beginPath();
+      ctx.ellipse(0, 0, 20, 18, 0, 0, Math.PI*2);
+      ctx.fill();
+      ctx.fillStyle = "#fff";
+      ctx.beginPath();
+      ctx.ellipse(-7, 2, 6, 8, 0, 0, Math.PI*2);
+      ctx.ellipse(7, 2, 6, 8, 0, 0, Math.PI*2);
+      ctx.fill();
+      ctx.fillStyle = "#f9b";
+      ctx.beginPath();
+      ctx.arc(0, 12, 4, 0, Math.PI*2);
+      ctx.fill();
+      ctx.restore();
+    }
+    function drawPompompurin(ctx, x, y) {
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.fillStyle = "#ffe4b5";
+      ctx.beginPath();
+      ctx.ellipse(0, 0, 22, 18, 0, 0, Math.PI*2);
+      ctx.fill();
+      ctx.fillStyle = "#b5651d";
+      ctx.beginPath();
+      ctx.arc(0, -14, 10, 0, Math.PI, true);
+      ctx.fill();
+      ctx.fillStyle = "#222";
+      ctx.beginPath();
+      ctx.arc(-7, -2, 2, 0, Math.PI*2);
+      ctx.arc(7, -2, 2, 0, Math.PI*2);
+      ctx.arc(0, 5, 2, 0, Math.PI*2);
+      ctx.fill();
+      ctx.restore();
+    }
+    function drawPekkle(ctx, x, y) {
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.fillStyle = "#fff";
+      ctx.beginPath();
+      ctx.ellipse(0, 0, 20, 18, 0, 0, Math.PI*2);
+      ctx.fill();
+      ctx.fillStyle = "#ff0";
+      ctx.beginPath();
+      ctx.arc(0, 10, 8, 0, Math.PI, false);
+      ctx.fill();
+      ctx.fillStyle = "#222";
+      ctx.beginPath();
+      ctx.arc(-7, -2, 2, 0, Math.PI*2);
+      ctx.arc(7, -2, 2, 0, Math.PI*2);
+      ctx.arc(0, 5, 2, 0, Math.PI*2);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    // --- Dibujo de personajes Sanrio base ---
+    function drawHelloKitty(ctx, x, y) {
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.fillStyle = "#fff";
+      ctx.beginPath();
+      ctx.ellipse(0, 0, 32, 26, 0, 0, Math.PI*2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.ellipse(-20, -22, 8, 12, -0.3, 0, Math.PI*2);
+      ctx.ellipse(20, -22, 8, 12, 0.3, 0, Math.PI*2);
+      ctx.fill();
+      ctx.fillStyle = "#f66";
+      ctx.beginPath();
+      ctx.ellipse(-14, -16, 6, 4, 0, 0, Math.PI*2);
+      ctx.ellipse(-6, -20, 6, 4, 0, 0, Math.PI*2);
+      ctx.ellipse(-10, -18, 4, 4, 0, 0, Math.PI*2);
+      ctx.fill();
+      ctx.fillStyle = "#222";
+      ctx.beginPath();
+      ctx.ellipse(-10, -4, 2.5, 4, 0, 0, Math.PI*2);
+      ctx.ellipse(10, -4, 2.5, 4, 0, 0, Math.PI*2);
+      ctx.fill();
+      ctx.fillStyle = "#ff0";
+      ctx.beginPath();
+      ctx.ellipse(0, 2, 3, 2, 0, 0, Math.PI*2);
+      ctx.fill();
+      ctx.strokeStyle = "#222";
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(-16, 0); ctx.lineTo(-32, 0);
+      ctx.moveTo(-16, 6); ctx.lineTo(-30, 10);
+      ctx.moveTo(-16, -6); ctx.lineTo(-30, -10);
+      ctx.moveTo(16, 0); ctx.lineTo(32, 0);
+      ctx.moveTo(16, 6); ctx.lineTo(30, 10);
+      ctx.moveTo(16, -6); ctx.lineTo(30, -10);
+      ctx.stroke();
+      ctx.restore();
+    }
+    function drawPochacco(ctx, x, y) {
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.fillStyle = "#222";
+      ctx.fillRect(-18, -20, 6, 16);
+      ctx.fillRect(12, -20, 6, 16);
+      ctx.fillStyle = "#fff";
+      ctx.beginPath();
+      ctx.ellipse(0, 0, 18, 16, 0, 0, Math.PI*2);
+      ctx.fill();
+      ctx.fillStyle = "#222";
+      ctx.beginPath();
+      ctx.arc(-6, -2, 2, 0, Math.PI*2);
+      ctx.arc(6, -2, 2, 0, Math.PI*2);
+      ctx.arc(0, 3, 1.5, 0, Math.PI*2);
+      ctx.fill();
+      ctx.restore();
+    }
+    function drawMyMelody(ctx, x, y) {
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.fillStyle = "#f9b";
+      ctx.beginPath();
+      ctx.ellipse(-14, -22, 8, 20, -0.3, 0, Math.PI*2);
+      ctx.ellipse(14, -22, 8, 20, 0.3, 0, Math.PI*2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.ellipse(0, 0, 18, 16, 0, 0, Math.PI*2);
+      ctx.fill();
+      ctx.fillStyle = "#fff";
+      ctx.beginPath();
+      ctx.ellipse(0, 4, 13, 10, 0, 0, Math.PI*2);
+      ctx.fill();
+      ctx.fillStyle = "#222";
+      ctx.beginPath();
+      ctx.arc(-4, 7, 1.5, 0, Math.PI*2);
+      ctx.arc(4, 7, 1.5, 0, Math.PI*2);
+      ctx.fill();
+      ctx.fillStyle = "#fbb";
+      ctx.beginPath();
+      ctx.arc(0, 11, 1.5, 0, Math.PI*2);
+      ctx.fill();
+      ctx.restore();
+    }
+    function drawKeroppi(ctx, x, y) {
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.fillStyle = "#fff";
+      ctx.beginPath();
+      ctx.ellipse(-8, -12, 8, 8, 0, 0, Math.PI*2);
+      ctx.ellipse(8, -12, 8, 8, 0, 0, Math.PI*2);
+      ctx.fill();
+      ctx.fillStyle = "#222";
+      ctx.beginPath();
+      ctx.arc(-8, -12, 2.5, 0, Math.PI*2);
+      ctx.arc(8, -12, 2.5, 0, Math.PI*2);
+      ctx.fill();
+      ctx.fillStyle = "#b2ff5c";
+      ctx.beginPath();
+      ctx.ellipse(0, 0, 18, 14, 0, 0, Math.PI*2);
+      ctx.fill();
+      ctx.fillStyle = "#f99";
+      ctx.beginPath();
+      ctx.arc(-9, 5, 2, 0, Math.PI*2);
+      ctx.arc(9, 5, 2, 0, Math.PI*2);
+      ctx.fill();
+      ctx.strokeStyle = "#222";
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.arc(0, 7, 6, 0, Math.PI, false);
+      ctx.stroke();
+      ctx.restore();
+    }
+    function drawCinnamoroll(ctx, x, y) {
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.fillStyle = "#bde0fe";
+      ctx.beginPath();
+      ctx.ellipse(-18, -4, 12, 5, 0.2, 0, Math.PI*2);
+      ctx.ellipse(18, -4, 12, 5, -0.2, 0, Math.PI*2);
+      ctx.fill();
+      ctx.fillStyle = "#fff";
+      ctx.beginPath();
+      ctx.ellipse(0, 0, 18, 12, 0, 0, Math.PI*2);
+      ctx.fill();
+      ctx.fillStyle = "#39f";
+      ctx.beginPath();
+      ctx.arc(-5, -1, 2, 0, Math.PI*2);
+      ctx.arc(5, -1, 2, 0, Math.PI*2);
+      ctx.fill();
+      ctx.fillStyle = "#fbb";
+      ctx.beginPath();
+      ctx.arc(-8, 5, 1.2, 0, Math.PI*2);
+      ctx.arc(8, 5, 1.2, 0, Math.PI*2);
+      ctx.fill();
+      ctx.strokeStyle = "#222";
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.arc(0, 5, 5, 0, Math.PI, false);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // --- Dibuja pastel según selección ---
+    function drawPastel() {
+      ctx.clearRect(0,0,140,140);
+      bases[eleccion.base].draw(ctx,70,70);
+      cremas[eleccion.crema].draw(ctx,70,60);
+      decoraciones[eleccion.deco].draw(ctx,70,60);
+      extras[eleccion.extra].draw(ctx,70,45);
+    }
+
+    // --- Nota de pedido animada (máquina de escribir) ---
+    function escribirNotaPedido(texto) {
+      notaPedidoDiv.innerHTML = "";
+      let i = 0;
+      function escribir() {
+        if(i < texto.length) {
+          notaPedidoDiv.innerHTML += texto[i];
+          sonidoEscribir.currentTime = 0;
+          sonidoEscribir.play();
+          i++;
+          setTimeout(escribir, 30 + Math.random()*40);
+        }
+      }
+      escribir();
+    }
+
+    // --- Charla animada con sonido tipo undertale (solo mientras habla) ---
+    function escribirCharla(texto) {
+      charlaDiv.innerHTML = "";
+      let i = 0;
+      let hablando = true;
+      function escribir() {
+        if(i < texto.length) {
+          charlaDiv.innerHTML += texto[i];
+          if(texto[i] !== " " && texto[i] !== "\n") {
+            sonidoUndertale.currentTime = 0;
+            sonidoUndertale.play();
+          }
+          i++;
+          setTimeout(escribir, 22 + Math.random()*18);
+        } else {
+          hablando = false;
+          sonidoUndertale.pause();
+          sonidoUndertale.currentTime = 0;
+        }
+      }
+      escribir();
+    }
+
+    // --- Genera un pedido aleatorio ---
+    function nuevoPedido() {
+      let tematica = getTematicaActual();
+      let personajes = tematica.personajes;
+      pedido = {
+        personaje: personajes[Math.floor(Math.random()*personajes.length)],
+        base: Math.floor(Math.random()*bases.length),
+        crema: Math.floor(Math.random()*cremas.length),
+        deco: Math.floor(Math.random()*decoraciones.length),
+        extra: Math.floor(Math.random()*extras.length)
+      };
+      escribirCharla(`${pedido.personaje.nombre}: ${pedido.personaje.charla}`);
+      escribirNotaPedido(
+        `Pedido:\n- Base: ${bases[pedido.base].nombre}\n- Crema: ${cremas[pedido.crema].nombre}\n- Decoración: ${decoraciones[pedido.deco].nombre}\n- Extra: ${extras[pedido.extra].nombre}`
+      );
+      animX = -110;
+      animIn = true;
+      drawPersonajeAnim();
+      mensajeDiv.innerHTML = "";
+      calificacionDiv.innerHTML = "";
+      drawHorno();
+      drawCocina();
+    }
+
+    // --- Opciones de selección ---
+    function renderOpciones() {
+      basesDiv.innerHTML = cremasDiv.innerHTML = decoracionesDiv.innerHTML = extrasDiv.innerHTML = "";
+      bases.forEach((b,i)=>{
+        let btn = document.createElement('button');
+        btn.innerText = b.nombre;
+        if(eleccion.base==i) btn.style.border="3px solid #f69";
+        btn.onclick = ()=>{eleccion.base=i; drawPastel(); renderOpciones();};
+        basesDiv.appendChild(btn);
+      });
+      cremas.forEach((c,i)=>{
+        let btn = document.createElement('button');
+        btn.innerText = c.nombre;
+        if(eleccion.crema==i) btn.style.border="3px solid #f69";
+        btn.onclick = ()=>{eleccion.crema=i; drawPastel(); renderOpciones();};
+        cremasDiv.appendChild(btn);
+      });
+      decoraciones.forEach((d,i)=>{
+        let btn = document.createElement('button');
+        btn.innerText = d.nombre;
+        if(eleccion.deco==i) btn.style.border="3px solid #f69";
+        btn.onclick = ()=>{eleccion.deco=i; drawPastel(); renderOpciones();};
+        decoracionesDiv.appendChild(btn);
+      });
+      extras.forEach((e,i)=>{
+        let btn = document.createElement('button');
+        btn.innerText = e.nombre;
+        if(eleccion.extra==i) btn.style.border="3px solid #f69";
+        btn.onclick = ()=>{eleccion.extra=i; drawPastel(); renderOpciones();};
+        extrasDiv.appendChild(btn);
+      });
+    }
+
+    // --- Animación de entrada del cliente ---
+    function drawPersonajeAnim() {
+      ctxPersonaje.clearRect(0,0,110,90);
+      if(animIn) {
+        animX += 7;
+        if(animX >= 55) {
+          animX = 55;
+          animIn = false;
+        }
+        pedido.personaje.cara(ctxPersonaje, animX, 45);
+        requestAnimationFrame(drawPersonajeAnim);
+      } else {
+        pedido.personaje.cara(ctxPersonaje, 55, 45);
+      }
+    }
+
+    // --- Horno animado ---
+    function drawHorno(pastelEnHorno=false, brillo=0) {
+      ctxHorno.clearRect(0,0,110,80);
+      ctxHorno.fillStyle = "#b5651d";
+      ctxHorno.fillRect(0,10,110,60);
+      ctxHorno.fillStyle = "#fffbe7";
+      ctxHorno.fillRect(15,25,80,40);
+      ctxHorno.strokeStyle = "#8b5c2a";
+      ctxHorno.lineWidth = 3;
+      ctxHorno.strokeRect(0,10,110,60);
+      ctxHorno.fillStyle = "#c9a77d";
+      ctxHorno.beginPath();
+      ctxHorno.arc(100,20,6,0,Math.PI*2);
+      ctxHorno.fill();
+      if(pastelEnHorno) {
+        ctxHorno.save();
+        ctxHorno.globalAlpha = 0.7+0.3*Math.sin(brillo*0.3);
+        bases[eleccion.base].draw(ctxHorno,55,55);
+        cremas[eleccion.crema].draw(ctxHorno,55,45);
+        decoraciones[eleccion.deco].draw(ctxHorno,55,45);
+        extras[eleccion.extra].draw(ctxHorno,55,30);
+        ctxHorno.restore();
+      }
+    }
+
+    // --- Calificación del pastel ---
+    function calificaPastel() {
+      let aciertos = 0;
+      if(eleccion.base==pedido.base) aciertos++;
+      if(eleccion.crema==pedido.crema) aciertos++;
+      if(eleccion.deco==pedido.deco) aciertos++;
+      if(eleccion.extra==pedido.extra) aciertos++;
+      let estrellas = ["⭐","⭐⭐","⭐⭐⭐","⭐⭐⭐⭐","⭐⭐⭐⭐⭐"][aciertos];
+      let comentarios = [
+        "¡Oh no! No era lo que quería... 😢",
+        "¡Gracias, pero no era mi favorito! 😅",
+        "¡Está bien, pero le faltó algo! 🙂",
+        "¡Muy bien, casi perfecto! 😃",
+        "¡Perfecto, es mi pastel soñado! 🎉"
+      ];
+      calificacionDiv.innerHTML = `<span>${estrellas}</span><br><span>${comentarios[aciertos]}</span>`;
+      puntaje += aciertos;
+      totalPedidos++;
+      puntajeDiv.innerHTML = `Pedidos: ${totalPedidos} &nbsp; | &nbsp; Puntos: ${puntaje}`;
+      sonidoEntregar.currentTime = 0;
+      sonidoEntregar.play();
+      // Cambia de temática si corresponde
+      if (puntaje % 50 === 0) {
+        setTimeout(() => {
+          mensajeDiv.innerHTML = `¡Nueva temática: ${getTematicaActual().nombre}!`;
+          drawCocina();
+        }, 1000);
+      }
+    }
+
+    // --- Entregar pastel (con animación de horno) ---
+    entregarBtn.onclick = ()=>{
+      if(horneando) return;
+      horneando = true;
+      let t = 0;
+      function hornoAnimar() {
+        drawHorno(true, t);
+        t++;
+        if(t<30) requestAnimationFrame(hornoAnimar);
+        else {
+          horneando = false;
+          drawHorno(false);
+          calificaPastel();
+          setTimeout(()=>{
+            eleccion = {base:0, crema:0, deco:0, extra:0};
+            drawPastel();
+            renderOpciones();
+            nuevoPedido();
+          }, 1800);
+        }
+      }
+      hornoAnimar();
+    };
+
+    // --- Inicializa juego ---
+    drawCocina();
+    drawPastel();
+    renderOpciones();
+    nuevoPedido();
+    puntajeDiv.innerHTML = `Pedidos: 0 &nbsp; | &nbsp; Puntos: 0`;
+    drawHorno();
+  </script>
+</body>
+</html>
